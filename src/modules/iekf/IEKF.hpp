@@ -117,16 +117,16 @@ private:
 	ros::Publisher _pubEstimatorStatus;
 
 	// data
-	Vector<float, X::n> _x0; // initial state
-	Vector<float, X::n> _xMin; // lower bound
-	Vector<float, X::n> _xMax; // upper bound
-	Vector<float, Xe::n> _P0Diag; // initial state diagonal
-	Vector<float, X::n> _x; // state
-	SquareMatrix<float, Xe::n> _P; // covariance
-	Vector<float, U::n> _u;
-	Vector3f _g_n;
-	Vector3f _B_n;
-	Origin _origin;
-	float _baroAsl;
-	uint64_t _gpsUSec;
+	Vector<float, X::n> _x0; 		// initial state vector
+	Vector<float, X::n> _xMin; 		// lower bound vector
+	Vector<float, X::n> _xMax; 		// upper bound vector
+	Vector<float, Xe::n> _P0Diag; 	// initial state diagonal
+	Vector<float, X::n> _x; 		// state vector
+	SquareMatrix<float, Xe::n> _P; 	// covariance matrix
+	Vector<float, U::n> _u; 		// input vector
+	Vector3f _g_n; 					// expected gravity in navigation frame
+	Vector3f _B_n; 					// expected magnetic field in navigation frame
+	Origin _origin; 				// origin of local coordinate system
+	float _baroAsl; 				// pressure altitude from baro
+	uint64_t _gpsUSec; 				// gps internal timestamp
 };

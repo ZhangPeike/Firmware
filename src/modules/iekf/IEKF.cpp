@@ -1007,7 +1007,7 @@ void IEKF::publish()
 
 		// XXX
 		// this isn't really general and is
-		// taylored to EKF2 so just dumping
+		// tailored to EKF2 so just dumping
 		// data in the best field names available
 		msg.gps_check_fail_flags = 0; // TODO
 		msg.control_mode_flags = 0; // TODO
