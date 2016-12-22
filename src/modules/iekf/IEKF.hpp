@@ -118,6 +118,8 @@ private:
 
 	// data
 	Vector<float, X::n> _x0; // initial state
+	Vector<float, X::n> _xMin; // lower bound
+	Vector<float, X::n> _xMax; // upper bound
 	Vector<float, Xe::n> _P0Diag; // initial state diagonal
 	Vector<float, X::n> _x; // state
 	SquareMatrix<float, Xe::n> _P; // covariance

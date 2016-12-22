@@ -62,6 +62,8 @@ IEKF::IEKF() :
 	_pubEstimatorStatus(_nh.advertise<estimator_status_s>("estimator_status", 0)),
 	// data
 	_x0(),
+	_xMin(),
+	_xMax(),
 	_P0Diag(),
 	_x(),
 	_P(),
@@ -72,13 +74,56 @@ IEKF::IEKF() :
 	_baroAsl(0),
 	_gpsUSec(0)
 {
+	// for quaterinons we bound at 2
+	// so it has a chance to
+	// do a renormalization first
+	_xMin(X::q_nb_0) = -2;
+	_xMin(X::q_nb_1) = -2;
+	_xMin(X::q_nb_2) = -2;
+	_xMin(X::q_nb_3) = -2;
+	_xMin(X::vel_N) = -100;
+	_xMin(X::vel_E) = -100;
+	_xMin(X::vel_D) = -100;
+	_xMin(X::gyro_bias_bX) = 0;
+	_xMin(X::gyro_bias_bY) = 0;
+	_xMin(X::gyro_bias_bZ) = 0;
+	_xMin(X::accel_scale) = 0.8;
+	_xMin(X::pos_N) = -1e9;
+	_xMin(X::pos_E) = -1e9;
+	_xMin(X::asl) = -1e9;
+	_xMin(X::terrain_asl) = -1e6;
+	_xMin(X::baro_bias) = -1e6;
+	_xMin(X::wind_N) = -100;
+	_xMin(X::wind_E) = -100;
+	_xMin(X::wind_D) = -100;
+
+	_xMax(X::q_nb_0) = 2;
+	_xMax(X::q_nb_1) = 2;
+	_xMax(X::q_nb_2) = 2;
+	_xMax(X::q_nb_3) = 2;
+	_xMax(X::vel_N) = 100;
+	_xMax(X::vel_E) = 100;
+	_xMax(X::vel_D) = 100;
+	_xMax(X::gyro_bias_bX) = 0;
+	_xMax(X::gyro_bias_bY) = 0;
+	_xMax(X::gyro_bias_bZ) = 0;
+	_xMax(X::accel_scale) = 1.5;
+	_xMax(X::pos_N) = 1e9;
+	_xMax(X::pos_E) = 1e9;
+	_xMax(X::asl) = 1e9;
+	_xMax(X::terrain_asl) = 1e6;
+	_xMax(X::baro_bias) = 1e6;
+	_xMax(X::wind_N) = 100;
+	_xMax(X::wind_E) = 100;
+	_xMax(X::wind_D) = 100;
+
 	// initialize state
 	_x0(X::q_nb_0) = 1;
 	_x0(X::q_nb_1) = 0;
 	_x0(X::q_nb_2) = 0;
 	_x0(X::q_nb_3) = 0;
 	_x0(X::accel_scale) = 1;
-	_x = _x0;
+	setX(_x0);
 
 	// initialize covariance
 	_P0Diag(Xe::rot_N) = 1;
@@ -99,7 +144,7 @@ IEKF::IEKF() :
 	_P0Diag(Xe::wind_N) = 1e-2;
 	_P0Diag(Xe::wind_E) = 1e-2;
 	_P0Diag(Xe::wind_D) = 1e-2;
-	_P = diag(_P0Diag);
+	setP(diag(_P0Diag));
 
 	// initial magnetic field guess
 	_B_n = Vector3f(0.21523, 0.00771, -0.42741);
@@ -767,64 +812,19 @@ void IEKF::setX(const Vector<float, X::n> &x)
 	// set private state
 	_x = x;
 
-	// for quaterinons we bound at 2
-	// so it has a chance to
-	// do a renormalization first
-	Vector<float, X::n> lowerBound;
-	lowerBound(X::q_nb_0) = -2;
-	lowerBound(X::q_nb_1) = -2;
-	lowerBound(X::q_nb_2) = -2;
-	lowerBound(X::q_nb_3) = -2;
-	lowerBound(X::vel_N) = -100;
-	lowerBound(X::vel_E) = -100;
-	lowerBound(X::vel_D) = -100;
-	lowerBound(X::gyro_bias_bX) = 0;
-	lowerBound(X::gyro_bias_bY) = 0;
-	lowerBound(X::gyro_bias_bZ) = 0;
-	lowerBound(X::accel_scale) = 0.8;
-	lowerBound(X::pos_N) = -1e9;
-	lowerBound(X::pos_E) = -1e9;
-	lowerBound(X::asl) = -1e9;
-	lowerBound(X::terrain_asl) = -1e6;
-	lowerBound(X::baro_bias) = -1e6;
-	lowerBound(X::wind_N) = -100;
-	lowerBound(X::wind_E) = -100;
-	lowerBound(X::wind_D) = -100;
-
-	Vector<float, X::n> upperBound;
-	upperBound(X::q_nb_0) = 2;
-	upperBound(X::q_nb_1) = 2;
-	upperBound(X::q_nb_2) = 2;
-	upperBound(X::q_nb_3) = 2;
-	upperBound(X::vel_N) = 100;
-	upperBound(X::vel_E) = 100;
-	upperBound(X::vel_D) = 100;
-	upperBound(X::gyro_bias_bX) = 0;
-	upperBound(X::gyro_bias_bY) = 0;
-	upperBound(X::gyro_bias_bZ) = 0;
-	upperBound(X::accel_scale) = 1.5;
-	upperBound(X::pos_N) = 1e9;
-	upperBound(X::pos_E) = 1e9;
-	upperBound(X::asl) = 1e9;
-	upperBound(X::terrain_asl) = 1e6;
-	upperBound(X::baro_bias) = 1e6;
-	upperBound(X::wind_N) = 100;
-	upperBound(X::wind_E) = 100;
-	upperBound(X::wind_D) = 100;
-
 	for (int i = 0; i < X::n; i++) {
 		if (!PX4_ISFINITE(_x(i))) {
 			ROS_WARN("x(%d) NaN, setting to %10.4f", i, double(_x0(i)));
 			_x(i) = _x0(i);
 		}
 
-		if (_x(i) < lowerBound(i)) {
+		if (_x(i) < _xMin(i)) {
 			//ROS_DEBUG("x(%d) < lower bound, saturating", i);
-			_x(i) = lowerBound(i);
+			_x(i) = _xMin(i);
 
-		} else if (_x(i) > upperBound(i)) {
+		} else if (_x(i) > _xMax(i)) {
 			//ROS_DEBUG("x(%d) > upper bound, saturating", i);
-			_x(i) = upperBound(i);
+			_x(i) = _xMax(i);
 		}
 	}
 }
